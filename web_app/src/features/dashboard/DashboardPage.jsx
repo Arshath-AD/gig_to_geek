@@ -6,6 +6,7 @@ import { FinancialSnapshot } from './components/FinancialSnapshot';
 import { IncomeSources } from './components/IncomeSources';
 import { RecentTransactions } from './components/RecentTransactions';
 import { SmartRecommendations } from './components/SmartRecommendations';
+import AddExpenseSheet from './AddExpenseSheet';
 import logoImage from '../../assets/logo.png';
 import api from '../../services/api';
 import './Home.css';
@@ -16,6 +17,7 @@ export default function DashboardPage() {
 
   const [insights, setInsights] = useState([]);
   const [loadingInsights, setLoadingInsights] = useState(true);
+  const [showExpenseSheet, setShowExpenseSheet] = useState(false);
 
   // Mock transactions for display since we don't have a GET /transactions endpoint yet
   const recentTransactions = [
@@ -52,9 +54,9 @@ export default function DashboardPage() {
           </Link>
 
           <nav className="nav-links" aria-label="Main navigation">
-            <Link to="/home" className="nav-link nav-link--active">Overview</Link>
-            <Link to="/home" className="nav-link">Transactions</Link>
-            <Link to="/profile" className="nav-link">Settings</Link>
+            <Link to="/home"         className="nav-link nav-link--active">Overview</Link>
+            <Link to="/transactions" className="nav-link">Transactions</Link>
+            <Link to="/profile"      className="nav-link">Settings</Link>
           </nav>
 
           <div className="nav-actions">
@@ -73,8 +75,8 @@ export default function DashboardPage() {
             <p className="greeting-sub">Welcome back, {firstName}. Here is your financial summary.</p>
           </div>
           <div className="header-actions">
-            <button className="btn-ghost">Add Expense</button>
-            <button className="btn-primary"><Plus size={16} /> Log Income</button>
+            <button className="btn-ghost" onClick={() => setShowExpenseSheet(true)}>Add Expense</button>
+            <button className="btn-primary" onClick={() => setShowExpenseSheet(true)}><Plus size={16} /> Log Income</button>
           </div>
         </section>
 
@@ -87,6 +89,13 @@ export default function DashboardPage() {
           <RecentTransactions transactions={recentTransactions} />
         </section>
       </main>
+
+      {showExpenseSheet && (
+        <AddExpenseSheet
+          onClose={() => setShowExpenseSheet(false)}
+          onSuccess={() => setShowExpenseSheet(false)}
+        />
+      )}
     </div>
   );
 }

@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import {
   User, Briefcase, Target,
-  ArrowLeft, CheckCircle2, AlertTriangle, Plus, Trash2
+  CheckCircle2, AlertTriangle, Plus, Trash2
 } from 'lucide-react';
+import logoImage from '../../assets/logo.png';
 import './Profile.css';
+import '../dashboard/Home.css';
 
 export default function ProfilePage() {
   const { user, updateProfile, logout } = useAuth();
@@ -88,12 +90,24 @@ export default function ProfilePage() {
 
   return (
     <div className="profile-page">
-      <header className="profile-header">
-        <div className="profile-header-left">
-          <button className="back-btn" onClick={() => navigate('/home')}>
-            <ArrowLeft size={18} />
-          </button>
-          <h1 className="profile-title">Settings</h1>
+      <header className="home-nav" role="banner">
+        <div className="nav-container">
+          <Link to="/home" className="auth-brand" aria-label="GigToGeek home">
+            <img src={logoImage} alt="GigToGeek Logo" className="brand-logo-img" />
+            <span className="brand-name">GigToGeek</span>
+          </Link>
+
+          <nav className="nav-links" aria-label="Main navigation">
+            <Link to="/home"         className="nav-link">Overview</Link>
+            <Link to="/transactions" className="nav-link">Transactions</Link>
+            <Link to="/profile"      className="nav-link nav-link--active">Settings</Link>
+          </nav>
+
+          <div className="nav-actions">
+            <Link to="/profile" className="nav-avatar" aria-label={`Logged in as ${user?.full_name}`}>
+              {(user?.full_name?.charAt(0) ?? 'U').toUpperCase()}
+            </Link>
+          </div>
         </div>
       </header>
 

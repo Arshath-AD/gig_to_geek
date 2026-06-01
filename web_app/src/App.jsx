@@ -6,6 +6,7 @@ import SignupPage       from './features/auth/SignupPage';
 import DashboardPage    from './features/dashboard/DashboardPage';
 import OnboardingPage   from './features/onboarding/OnboardingPage';
 import ProfilePage      from './features/profile/ProfilePage';
+import TransactionsPage from './features/transactions/TransactionsPage';
 
 // Smart guard: authenticated but profile not completed → go to /onboarding
 function HomeGuard() {
@@ -48,6 +49,16 @@ export default function App() {
             element={
               <PrivateRoute>
                 <ProfilePage />
+              </PrivateRoute>
+            }
+          />
+
+          {/* Transactions */}
+          <Route
+            path="/transactions"
+            element={
+              <PrivateRoute>
+                <TransactionsPage />
               </PrivateRoute>
             }
           />
