@@ -1,0 +1,29 @@
+# ============================================================
+# GigToGeek — Python Dependencies
+# Pin major versions; update minor/patch after testing.
+# ============================================================
+
+# Web Framework & ASGI Server
+fastapi==0.111.0
+uvicorn[standard]==0.29.0
+
+# Database ORM & PostgreSQL Driver
+sqlalchemy==2.0.30
+psycopg2-binary==2.9.9
+alembic==1.13.1            # Database migrations
+
+# Data Validation & Settings
+pydantic==2.7.1
+pydantic-settings==2.2.1   # .env file support via BaseSettings
+
+# Authentication & Security
+passlib[bcrypt]==1.7.4
+bcrypt==4.0.1                              # Pin: 4.1+ breaks passlib 1.7.4
+python-jose[cryptography]==3.3.0   # JWT token handling
+python-multipart==0.0.9            # Form data / file uploads
+
+# HTTP Client (for AI service calls)
+httpx==0.27.0
+
+# Utilities
+python-dotenv==1.0.1

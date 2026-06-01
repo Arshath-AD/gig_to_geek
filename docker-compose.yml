@@ -1,0 +1,74 @@
+
+# ============================================================
+# GigToGeek — Docker Compose (Local Development)
+# Team: Sudo Apt Build
+# ============================================================
+
+services:
+
+  # ── PostgreSQL Database ──────────────────────────────────
+  db:
+    image: postgres:17-alpine
+    container_name: gigtogeek_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-gigtogeek_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-gigtogeek_secret}
+      POSTGRES_DB: ${POSTGRES_DB:-gigtogeek_db}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-gigtogeek_user} -d ${POSTGRES_DB:-gigtogeek_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # ── FastAPI Backend ──────────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: gigtogeek_backend
+    restart: unless-stopped
+    command: >
+      uvicorn main:app
+      --host 0.0.0.0
+      --port 8000
+      --reload
+      --reload-dir /app
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-gigtogeek_user}:${POSTGRES_PASSWORD:-gigtogeek_secret}@db:5432/${POSTGRES_DB:-gigtogeek_db}
+      SECRET_KEY: ${SECRET_KEY:-change_me_in_production_supersecretkey}
+      ENVIRONMENT: ${ENVIRONMENT:-development}
+    ports:
+      - "8000:8000"
+    volumes:
+      # Hot-reload: mount local source directly into container
+      - ./backend:/app
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # ── Vite / React Web App ─────────────────────────────────
+  frontend:
+    build:
+      context: ./web_app
+      dockerfile: Dockerfile
+    container_name: gigtogeek_frontend
+    restart: unless-stopped
+    ports:
+      - "5173:5173"
+    volumes:
+      # Hot-reload: mount source; exclude node_modules to use container's copy
+      - ./web_app:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+
+# ── Named Volumes ────────────────────────────────────────────
+volumes:
+  postgres_data:
+    driver: local
