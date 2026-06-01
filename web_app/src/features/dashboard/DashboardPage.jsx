@@ -7,7 +7,9 @@ import { IncomeSources } from './components/IncomeSources';
 import { RecentTransactions } from './components/RecentTransactions';
 import { SmartRecommendations } from './components/SmartRecommendations';
 import AddExpenseSheet from './AddExpenseSheet';
+import AddIncomeSheet from './AddIncomeSheet';
 import logoImage from '../../assets/logo.png';
+import { expenseService } from '../../services/expenseService';
 import api from '../../services/api';
 import './Home.css';
 
@@ -18,19 +20,31 @@ export default function DashboardPage() {
   const [insights, setInsights] = useState([]);
   const [loadingInsights, setLoadingInsights] = useState(true);
   const [showExpenseSheet, setShowExpenseSheet] = useState(false);
+  const [showIncomeSheet, setShowIncomeSheet]   = useState(false);
 
-  // Mock transactions for display since we don't have a GET /transactions endpoint yet
-  const recentTransactions = [
-    { id: 1, title: 'Swiggy Payout', date: 'Today, 2:40 PM', amount: 850, type: 'credit' },
-    { id: 2, title: 'Fuel (HP)', date: 'Yesterday', amount: 300, type: 'debit' },
-    { id: 3, title: 'Freelance Design', date: 'Oct 12', amount: 4500, type: 'credit' },
-  ];
+  const [recentTransactions, setRecentTransactions] = useState([]);
 
   useEffect(() => {
     api.get('/insights/')
       .then(r => setInsights(r.data.slice(0, 3)))
       .catch(() => {})
       .finally(() => setLoadingInsights(false));
+
+    // Fetch unified recent transactions
+    api.get('/transactions/')
+      .then(r => {
+        if (r.data) {
+          const recent = r.data.slice(0, 5).map(t => ({
+            id: t.id,
+            title: t.description || 'Transaction',
+            date: new Date(t.transaction_date).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' }),
+            amount: t.amount,
+            type: t.transaction_type === 'income' ? 'credit' : 'debit'
+          }));
+          setRecentTransactions(recent);
+        }
+      })
+      .catch(() => {});
   }, []);
 
 
@@ -56,6 +70,7 @@ export default function DashboardPage() {
           <nav className="nav-links" aria-label="Main navigation">
             <Link to="/home"         className="nav-link nav-link--active">Overview</Link>
             <Link to="/transactions" className="nav-link">Transactions</Link>
+            <Link to="/income"       className="nav-link">Income</Link>
             <Link to="/profile"      className="nav-link">Settings</Link>
           </nav>
 
@@ -75,8 +90,12 @@ export default function DashboardPage() {
             <p className="greeting-sub">Welcome back, {firstName}. Here is your financial summary.</p>
           </div>
           <div className="header-actions">
-            <button className="btn-ghost" onClick={() => setShowExpenseSheet(true)}>Add Expense</button>
-            <button className="btn-primary" onClick={() => setShowExpenseSheet(true)}><Plus size={16} /> Log Income</button>
+            <button className="btn-ghost" onClick={() => setShowExpenseSheet(true)}>
+              <Plus size={14} /> Add Expense
+            </button>
+            <button className="btn-primary" onClick={() => setShowIncomeSheet(true)}>
+              <Plus size={14} /> Add Income
+            </button>
           </div>
         </section>
 
@@ -94,6 +113,13 @@ export default function DashboardPage() {
         <AddExpenseSheet
           onClose={() => setShowExpenseSheet(false)}
           onSuccess={() => setShowExpenseSheet(false)}
+        />
+      )}
+
+      {showIncomeSheet && (
+        <AddIncomeSheet
+          onClose={() => setShowIncomeSheet(false)}
+          onSuccess={() => setShowIncomeSheet(false)}
         />
       )}
     </div>
