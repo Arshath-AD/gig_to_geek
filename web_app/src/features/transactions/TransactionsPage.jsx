@@ -8,27 +8,7 @@ import { expenseService } from '../../services/expenseService';
 import './Transactions.css';
 import '../dashboard/Home.css';
 
-// ── Seed mock data so the page isn't empty ──────────────────
-const MOCK_TRANSACTIONS = [
-  { id: 'm1',  name: 'Swiggy Payout',      category: 'Food & Drinks',    category_emoji: '🍔', amount: 850,   type: 'credit', payment_method: 'online', timestamp: new Date(Date.now() - 1*3600000).toISOString() },
-  { id: 'm2',  name: 'Fuel (HP)',           category: 'Fuel',             category_emoji: '⛽', amount: 300,   type: 'debit',  payment_method: 'cash',   timestamp: new Date(Date.now() - 26*3600000).toISOString() },
-  { id: 'm3',  name: 'Freelance Design',   category: 'Other',            category_emoji: '📦', amount: 4500,  type: 'credit', payment_method: 'online', timestamp: new Date(Date.now() - 3*86400000).toISOString() },
-  { id: 'm4',  name: 'Zomato Dinner',      category: 'Food & Drinks',    category_emoji: '🍔', amount: 620,   type: 'debit',  payment_method: 'online', timestamp: new Date(Date.now() - 4*86400000).toISOString() },
-  { id: 'm5',  name: 'Netflix',            category: 'Entertainment',    category_emoji: '🎬', amount: 499,   type: 'debit',  payment_method: 'online', timestamp: new Date(Date.now() - 5*86400000).toISOString() },
-  { id: 'm6',  name: 'Uber Ride',          category: 'Transport',        category_emoji: '🚗', amount: 180,   type: 'debit',  payment_method: 'online', timestamp: new Date(Date.now() - 6*86400000).toISOString() },
-  { id: 'm7',  name: 'Medical Checkup',    category: 'Health',           category_emoji: '💊', amount: 750,   type: 'debit',  payment_method: 'cash',   timestamp: new Date(Date.now() - 7*86400000).toISOString() },
-  { id: 'm8',  name: 'Electricity Bill',   category: 'Bills & Utilities', category_emoji: '💡', amount: 1200,  type: 'debit',  payment_method: 'online', timestamp: new Date(Date.now() - 8*86400000).toISOString() },
-  { id: 'm9',  name: 'Grocery (D-Mart)',   category: 'Shopping',         category_emoji: '🛍️', amount: 2340,  type: 'debit',  payment_method: 'cash',   timestamp: new Date(Date.now() - 9*86400000).toISOString() },
-  { id: 'm10', name: 'Ola Payout',         category: 'Other',            category_emoji: '📦', amount: 3200,  type: 'credit', payment_method: 'online', timestamp: new Date(Date.now() - 10*86400000).toISOString() },
-  { id: 'm11', name: 'Gym Membership',     category: 'Health',           category_emoji: '💊', amount: 1500,  type: 'debit',  payment_method: 'online', timestamp: new Date(Date.now() - 11*86400000).toISOString() },
-  { id: 'm12', name: 'House Rent',         category: 'Rent',             category_emoji: '🏠', amount: 12000, type: 'debit',  payment_method: 'online', timestamp: new Date(Date.now() - 12*86400000).toISOString() },
-  { id: 'm13', name: 'Udemy Course',       category: 'Education',        category_emoji: '📚', amount: 699,   type: 'debit',  payment_method: 'online', timestamp: new Date(Date.now() - 13*86400000).toISOString() },
-  { id: 'm14', name: 'Coffee (Starbucks)', category: 'Food & Drinks',    category_emoji: '🍔', amount: 350,   type: 'debit',  payment_method: 'cash',   timestamp: new Date(Date.now() - 14*86400000).toISOString() },
-  { id: 'm15', name: 'Rapido Payout',      category: 'Other',            category_emoji: '📦', amount: 1800,  type: 'credit', payment_method: 'online', timestamp: new Date(Date.now() - 15*86400000).toISOString() },
-  { id: 'm16', name: 'New Headphones',     category: 'Shopping',         category_emoji: '🛍️', amount: 4999,  type: 'debit',  payment_method: 'online', timestamp: new Date(Date.now() - 16*86400000).toISOString() },
-  { id: 'm17', name: 'Auto (Local)',       category: 'Transport',        category_emoji: '🚗', amount: 60,    type: 'debit',  payment_method: 'cash',   timestamp: new Date(Date.now() - 17*86400000).toISOString() },
-  { id: 'm18', name: 'Fiverr Payout',      category: 'Other',            category_emoji: '📦', amount: 6500,  type: 'credit', payment_method: 'online', timestamp: new Date(Date.now() - 18*86400000).toISOString() },
-];
+// Real transactions will be loaded from the backend
 
 const PAGE_SIZE = 8;
 
@@ -55,17 +35,17 @@ export default function TransactionsPage() {
   const { user } = useAuth();
   const firstName = user?.full_name?.split(' ')[0] ?? 'User';
 
-  const [transactions, setTransactions] = useState(MOCK_TRANSACTIONS);
+  const [transactions, setTransactions] = useState([]);
   const [search, setSearch]             = useState('');
   const [filter, setFilter]             = useState('all');
   const [page, setPage]                 = useState(1);
   const [showExpenseSheet, setShowExpenseSheet] = useState(false);
 
-  // Fetch real transactions (if backend has endpoint)
+  // Fetch real transactions
   useEffect(() => {
     expenseService.getExpenses()
       .then((data) => {
-        if (data?.length) setTransactions([...data, ...MOCK_TRANSACTIONS]);
+        if (data) setTransactions(data);
       })
       .catch(() => {});
   }, []);
@@ -122,6 +102,7 @@ export default function TransactionsPage() {
           <nav className="nav-links" aria-label="Main navigation">
             <Link to="/home"         className="nav-link">Overview</Link>
             <Link to="/transactions" className="nav-link nav-link--active">Transactions</Link>
+            <Link to="/income"       className="nav-link">Income</Link>
             <Link to="/profile"      className="nav-link">Settings</Link>
           </nav>
 

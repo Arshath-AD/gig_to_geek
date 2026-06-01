@@ -18,38 +18,53 @@ export default function ProfilePage() {
   const [error, setError] = useState('');
 
   // Form state
-  const [fullName, setFullName] = useState(user?.full_name || '');
-  const [balance, setBalance] = useState(user?.current_balance || '');
+  const [fullName, setFullName]       = useState(user?.full_name || '');
+  const [balance, setBalance]         = useState(user?.current_balance || '');
   const [monthlyGoal, setMonthlyGoal] = useState(user?.monthly_saving_goal || '');
   const [occupations, setOccupations] = useState(user?.occupations || []);
-  const [incomes, setIncomes] = useState({});
+  const [incomes, setIncomes]         = useState({});
+  const [frequencies, setFrequencies] = useState({});  // { [occupation]: 'daily'|'weekly'|'monthly' }
+  const [newOccName, setNewOccName]   = useState('');
+  const [showAddOcc, setShowAddOcc]   = useState(false);
 
   useEffect(() => {
     if (user?.income_per_occupation) {
-      const initialIncomes = {};
+      const initIncomes = {};
+      const initFreqs   = {};
       user.income_per_occupation.forEach((item) => {
-        initialIncomes[item.occupation] = item.income;
+        initIncomes[item.occupation] = item.income;
+        initFreqs[item.occupation]   = item.frequency || 'monthly';
       });
-      setIncomes(initialIncomes);
+      setIncomes(initIncomes);
+      setFrequencies(initFreqs);
     }
   }, [user]);
 
   const handleAddOccupation = () => {
-    const name = window.prompt("Enter new occupation name (e.g. Graphic Design):");
-    if (name && name.trim()) {
-      const occName = name.trim();
-      if (!occupations.includes(occName)) {
-        setOccupations([...occupations, occName]);
-        setIncomes({ ...incomes, [occName]: '' });
-      }
-    }
+    const occName = newOccName.trim();
+    if (!occName || occupations.includes(occName)) return;
+    setOccupations([...occupations, occName]);
+    setIncomes({ ...incomes, [occName]: '' });
+    setFrequencies({ ...frequencies, [occName]: 'monthly' });
+    setNewOccName('');
+    setShowAddOcc(false);
   };
+
+  // Compute monthly equivalent for an income source
+  const toMonthly = (occ) => {
+    const amt   = parseFloat(incomes[occ]) || 0;
+    const freq  = frequencies[occ] || 'monthly';
+    if (freq === 'daily')   return amt * 30;
+    if (freq === 'weekly')  return amt * 4;
+    return amt;
+  };
+
+  const totalMonthly = occupations.reduce((s, occ) => s + toMonthly(occ), 0);
 
   const handleRemoveOccupation = (occName) => {
     setOccupations(occupations.filter(o => o !== occName));
-    const newIncomes = { ...incomes };
-    delete newIncomes[occName];
-    setIncomes(newIncomes);
+    const ni = { ...incomes };     delete ni[occName];     setIncomes(ni);
+    const nf = { ...frequencies }; delete nf[occName];     setFrequencies(nf);
   };
 
   const handleSubmit = async (e) => {
@@ -61,10 +76,12 @@ export default function ProfilePage() {
     try {
       const incomePerOcc = occupations.map(occ => ({
         occupation: occ,
-        income: parseFloat(incomes[occ]) || 0
+        income:     parseFloat(incomes[occ]) || 0,
+        frequency:  frequencies[occ] || 'monthly',
+        monthly_equivalent: toMonthly(occ),
       }));
 
-      const totalIncome = incomePerOcc.reduce((sum, item) => sum + item.income, 0);
+      const totalIncome = incomePerOcc.reduce((sum, item) => sum + item.monthly_equivalent, 0);
       const monthly = parseFloat(monthlyGoal) || 0;
 
       await updateProfile({
@@ -100,6 +117,7 @@ export default function ProfilePage() {
           <nav className="nav-links" aria-label="Main navigation">
             <Link to="/home"         className="nav-link">Overview</Link>
             <Link to="/transactions" className="nav-link">Transactions</Link>
+            <Link to="/income"       className="nav-link">Income</Link>
             <Link to="/profile"      className="nav-link nav-link--active">Settings</Link>
           </nav>
 
@@ -156,32 +174,83 @@ export default function ProfilePage() {
             {/* Occupations & Income */}
             <div className="profile-section">
               <h3 className="profile-section-title"><Briefcase size={16} /> Income Sources</h3>
-              
+
               <div style={{ marginBottom: '16px' }}>
                 {occupations.map((occ) => (
                   <div key={occ} className="income-list-item">
-                    <span className="income-list-title">{occ}</span>
-                    
-                    <div className="income-input-wrap">
-                      <span style={{ color: 'var(--text-muted)', fontSize: '13px', fontWeight: '500' }}>₹</span>
-                      <input
-                        type="number"
-                        className="form-input"
-                        placeholder="0"
-                        value={incomes[occ] ?? ''}
-                        onChange={(e) => setIncomes({ ...incomes, [occ]: e.target.value })}
-                      />
-                      <button type="button" className="icon-btn" onClick={() => handleRemoveOccupation(occ)}>
-                        <Trash2 size={16} />
+                    <div className="income-list-header-row">
+                      <span className="income-list-title">{occ}</span>
+                      <button type="button" className="icon-btn" onClick={() => handleRemoveOccupation(occ)} aria-label={`Remove ${occ}`}>
+                        <Trash2 size={15} />
                       </button>
                     </div>
+
+                    {/* Amount + frequency on same row */}
+                    <div className="income-source-controls">
+                      <div className="income-input-wrap">
+                        <span className="income-currency">₹</span>
+                        <input
+                          type="number"
+                          className="form-input"
+                          placeholder="0"
+                          value={incomes[occ] ?? ''}
+                          onChange={(e) => setIncomes({ ...incomes, [occ]: e.target.value })}
+                        />
+                      </div>
+
+                      {/* Frequency toggle */}
+                      <div className="freq-toggle">
+                        {['daily', 'weekly', 'monthly'].map(f => (
+                          <button
+                            key={f}
+                            type="button"
+                            className={`freq-btn${(frequencies[occ] || 'monthly') === f ? ' active' : ''}`}
+                            onClick={() => setFrequencies({ ...frequencies, [occ]: f })}
+                          >
+                            {f.charAt(0).toUpperCase() + f.slice(1)}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Monthly equivalent hint */}
+                    {incomes[occ] && parseFloat(incomes[occ]) > 0 && frequencies[occ] !== 'monthly' && (
+                      <p className="income-monthly-hint">
+                        ≈ ₹{toMonthly(occ).toLocaleString('en-IN')} / month
+                      </p>
+                    )}
                   </div>
                 ))}
               </div>
 
-              <button type="button" className="add-btn-outline" onClick={handleAddOccupation}>
-                <Plus size={16} /> Add new income source
-              </button>
+              {/* Inline add occupation */}
+              {showAddOcc ? (
+                <div className="add-occ-row">
+                  <input
+                    type="text"
+                    className="form-input"
+                    placeholder="e.g. Graphic Design, Delivery, Writing…"
+                    value={newOccName}
+                    onChange={e => setNewOccName(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && handleAddOccupation()}
+                    autoFocus
+                  />
+                  <button type="button" className="add-occ-confirm" onClick={handleAddOccupation}>Add</button>
+                  <button type="button" className="add-occ-cancel" onClick={() => { setShowAddOcc(false); setNewOccName(''); }}>Cancel</button>
+                </div>
+              ) : (
+                <button type="button" className="add-btn-outline" onClick={() => setShowAddOcc(true)}>
+                  <Plus size={16} /> Add income source
+                </button>
+              )}
+
+              {/* Total monthly projection */}
+              {occupations.length > 0 && totalMonthly > 0 && (
+                <div className="income-total-bar">
+                  <span>Projected monthly income</span>
+                  <strong>₹{totalMonthly.toLocaleString('en-IN')}</strong>
+                </div>
+              )}
             </div>
 
             {/* Financial Goals */}

@@ -141,6 +141,9 @@ input, textarea, select { font-family: inherit; outline: none; }
   font-size: 13px;
   font-weight: 500;
   transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 .btn-ghost:hover {
   background: var(--bg-card-hover);

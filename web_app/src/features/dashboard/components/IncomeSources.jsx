@@ -15,7 +15,12 @@ export function IncomeSources({ incomes }) {
                 </div>
                 <span className="income-name">{inc.occupation}</span>
               </div>
-              <span className="income-amount">₹{Number(inc.income).toLocaleString()}</span>
+              <div className="income-amount-wrap" style={{ textAlign: 'right' }}>
+                <div className="income-amount">₹{Number(inc.income).toLocaleString()}</div>
+                <div className="income-freq" style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'capitalize' }}>
+                  {inc.frequency === 'daily' ? 'per day' : inc.frequency === 'weekly' ? 'per week' : 'per month'}
+                </div>
+              </div>
             </div>
           ))}
         </div>

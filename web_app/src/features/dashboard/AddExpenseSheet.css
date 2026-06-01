@@ -125,6 +125,23 @@
 }
 .amount-input::placeholder { color: var(--border); }
 
+/* Frequency equivalents strip */
+.freq-equiv {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+.freq-equiv span {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted);
+  background: var(--bg-secondary);
+  padding: 3px 10px;
+  border-radius: 99px;
+}
+
 /* Divider */
 .sheet-divider {
   height: 1px;
