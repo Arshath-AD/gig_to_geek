@@ -18,7 +18,6 @@ export const expenseService = {
   getExpenses: async () => {
     const res = await api.get('/transactions/');
     const all = res.data || [];
-    // Transform back to UI structure
     return all.filter(t => t.transaction_type === 'expense').map(t => ({
       id: t.id,
       name: t.description || 'Unknown',
@@ -28,6 +27,27 @@ export const expenseService = {
       payment_method: t.source || 'online',
       timestamp: t.transaction_date,
     }));
+  },
+
+  getAllTransactions: async () => {
+    const res = await api.get('/transactions/');
+    const all = res.data || [];
+    return all.map(t => {
+      let name = t.description || 'Unknown';
+      let type = t.transaction_type === 'income' ? 'credit' : 'debit';
+      if (type === 'credit' && name.includes(' - ')) {
+        name = name.split(' - ')[0]; // clean up note for display
+      }
+      return {
+        id: t.id,
+        name,
+        category: t.category,
+        amount: t.amount,
+        type,
+        payment_method: t.source || 'online',
+        timestamp: t.transaction_date,
+      };
+    });
   },
 
   deleteExpense: async (id) => {

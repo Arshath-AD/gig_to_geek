@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback } from 'react';
+import { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { authService } from '../services/authService';
 import { profileService } from '../services/profileService';
 
@@ -13,6 +13,24 @@ export function AuthProvider({ children }) {
       return null;
     }
   });
+
+  // Refresh user profile from server on every app load
+  // so admin-toggled flags (has_ai_access, etc.) are always current
+  useEffect(() => {
+    const token = localStorage.getItem('gg_token');
+    if (!token) return;
+    authService.getMe()
+      .then((fresh) => {
+        localStorage.setItem('gg_user', JSON.stringify(fresh));
+        setUser(fresh);
+      })
+      .catch(() => {
+        // Token expired / invalid — clear session
+        localStorage.removeItem('gg_token');
+        localStorage.removeItem('gg_user');
+        setUser(null);
+      });
+  }, []);
 
   const login = useCallback(async (email, password) => {
     const tokenData = await authService.login(email, password);

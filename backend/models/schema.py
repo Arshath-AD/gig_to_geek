@@ -64,10 +64,12 @@ class User(Base):
     monthly_saving_goal: Mapped[float | None] = mapped_column(Float, nullable=True)
     daily_saving_goal: Mapped[float | None] = mapped_column(Float, nullable=True)
     profile_completed: Mapped[bool] = mapped_column(Boolean, default=False)
+    has_ai_access: Mapped[bool] = mapped_column(Boolean, default=False)
     # Multi-gig fields
     occupations: Mapped[list | None] = mapped_column(JSON, nullable=True)
     custom_occupation: Mapped[str | None] = mapped_column(String(255), nullable=True)
     income_per_occupation: Mapped[list | None] = mapped_column(JSON, nullable=True)
+    constant_expenses: Mapped[list | None] = mapped_column(JSON, nullable=True)
     total_monthly_income: Mapped[float | None] = mapped_column(Float, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
