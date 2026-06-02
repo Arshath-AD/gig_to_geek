@@ -26,8 +26,12 @@ export default function LoginPage() {
     }
     setLoading(true);
     try {
-      await login(form.email, form.password);
-      navigate('/home', { replace: true });
+      const userProfile = await login(form.email, form.password);
+      if (userProfile?.is_superuser) {
+        navigate('/admin', { replace: true });
+      } else {
+        navigate('/home', { replace: true });
+      }
     } catch (err) {
       setError(err?.response?.data?.detail || 'Invalid email or password.');
     } finally {

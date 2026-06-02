@@ -1,7 +1,7 @@
 /* ── Home Page Layout ─────────────────────────────────────── */
 .home-page {
   padding-bottom: 60px;
-  background-color: var(--bg-primary);
+  background: transparent;
   min-height: 100vh;
 }
 
@@ -51,11 +51,14 @@
 .home-nav .brand-name {
   font-size: 15px;
   font-weight: 600;
-  color: var(--text-primary);
+  color: var(--text-primary) !important;
   letter-spacing: -0.01em;
   line-height: 1;
-  /* Collapses extra line height to align visual center with the logo */
-  transform: translateY(1px); /* Shifts the text slightly down for visual alignment */
+  transform: translateY(1px);
+  /* Explicitly kill any inherited gradient text from Auth.css */
+  background: none !important;
+  -webkit-background-clip: unset !important;
+  -webkit-text-fill-color: var(--text-primary) !important;
 }
 
 .nav-links {

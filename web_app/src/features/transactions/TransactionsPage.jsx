@@ -43,7 +43,7 @@ export default function TransactionsPage() {
 
   // Fetch real transactions
   useEffect(() => {
-    expenseService.getExpenses()
+    expenseService.getAllTransactions()
       .then((data) => {
         if (data) setTransactions(data);
       })

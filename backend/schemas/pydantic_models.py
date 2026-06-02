@@ -47,11 +47,19 @@ class UserRead(BaseModel):
     monthly_saving_goal: Optional[float]
     daily_saving_goal: Optional[float]
     profile_completed: bool
+    has_ai_access: bool
     occupations: Optional[list] = None
     custom_occupation: Optional[str] = None
     income_per_occupation: Optional[list] = None
+    constant_expenses: Optional[list] = None
     total_monthly_income: Optional[float] = None
     created_at: datetime
+
+
+class AdminUserRead(UserRead):
+    """Extended user read schema for admin dashboard including calculated metrics."""
+    logged_expenses_mtd: float = 0.0
+    fixed_expenses_total: float = 0.0
 
 
 class UserUpdate(BaseModel):
@@ -61,6 +69,7 @@ class UserUpdate(BaseModel):
     occupations: Optional[list] = None
     custom_occupation: Optional[str] = Field(None, max_length=255)
     income_per_occupation: Optional[list] = None
+    constant_expenses: Optional[list] = None
     monthly_income_estimate: Optional[float] = Field(None, ge=0)
     total_monthly_income: Optional[float] = Field(None, ge=0)
     current_balance: Optional[float] = Field(None, ge=0)

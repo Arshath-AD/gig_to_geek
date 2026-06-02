@@ -6,6 +6,7 @@ import { FinancialSnapshot } from './components/FinancialSnapshot';
 import { IncomeSources } from './components/IncomeSources';
 import { RecentTransactions } from './components/RecentTransactions';
 import { SmartRecommendations } from './components/SmartRecommendations';
+import { FinancialCharts } from './components/FinancialCharts';
 import AddExpenseSheet from './AddExpenseSheet';
 import AddIncomeSheet from './AddIncomeSheet';
 import logoImage from '../../assets/logo.png';
@@ -22,6 +23,7 @@ export default function DashboardPage() {
   const [showExpenseSheet, setShowExpenseSheet] = useState(false);
   const [showIncomeSheet, setShowIncomeSheet]   = useState(false);
 
+  const [allTransactions, setAllTransactions] = useState([]);
   const [recentTransactions, setRecentTransactions] = useState([]);
 
   useEffect(() => {
@@ -34,6 +36,8 @@ export default function DashboardPage() {
     api.get('/transactions/')
       .then(r => {
         if (r.data) {
+          setAllTransactions(r.data);
+
           const recent = r.data.slice(0, 5).map(t => ({
             id: t.id,
             title: t.description || 'Transaction',
@@ -71,7 +75,11 @@ export default function DashboardPage() {
             <Link to="/home"         className="nav-link nav-link--active">Overview</Link>
             <Link to="/transactions" className="nav-link">Transactions</Link>
             <Link to="/income"       className="nav-link">Income</Link>
+            {user?.has_ai_access && (
+              <Link to="/ai-advisor" className="nav-link" style={{ color: '#a78bfa' }}>✦ AI Advisor</Link>
+            )}
             <Link to="/profile"      className="nav-link">Settings</Link>
+            {user?.is_superuser && <Link to="/admin" className="nav-link" style={{ color: 'var(--danger)', fontWeight: 600 }}>Admin Panel</Link>}
           </nav>
 
           <div className="nav-actions">
@@ -102,6 +110,8 @@ export default function DashboardPage() {
         <FinancialSnapshot currentBal={currentBal} goalTarget={goalTarget} progressPct={progressPct} />
         
         <IncomeSources incomes={incomes} />
+
+        <FinancialCharts transactions={allTransactions} />
 
         <section className="secondary-grid">
           <SmartRecommendations insights={insights} loadingInsights={loadingInsights} />

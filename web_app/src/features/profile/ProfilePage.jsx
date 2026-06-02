@@ -2,10 +2,11 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import {
-  User, Briefcase, Target,
-  CheckCircle2, AlertTriangle, Plus, Trash2
+  User, Briefcase, Target, CreditCard,
+  CheckCircle2, AlertTriangle, Plus, Trash2, TestTube
 } from 'lucide-react';
 import logoImage from '../../assets/logo.png';
+import { authService } from '../../services/authService';
 import './Profile.css';
 import '../dashboard/Home.css';
 
@@ -14,7 +15,9 @@ export default function ProfilePage() {
   const navigate = useNavigate();
 
   const [loading, setLoading] = useState(false);
+  const [seeding, setSeeding] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [seedSuccess, setSeedSuccess] = useState(false);
   const [error, setError] = useState('');
 
   // Form state
@@ -27,6 +30,12 @@ export default function ProfilePage() {
   const [newOccName, setNewOccName]   = useState('');
   const [showAddOcc, setShowAddOcc]   = useState(false);
 
+  // Fixed Expenses State
+  const [fixedExpenses, setFixedExpenses] = useState([]);
+  const [expenseAmounts, setExpenseAmounts] = useState({});
+  const [newExpenseName, setNewExpenseName] = useState('');
+  const [showAddExpense, setShowAddExpense] = useState(false);
+
   useEffect(() => {
     if (user?.income_per_occupation) {
       const initIncomes = {};
@@ -37,6 +46,16 @@ export default function ProfilePage() {
       });
       setIncomes(initIncomes);
       setFrequencies(initFreqs);
+    }
+    if (user?.constant_expenses) {
+      const initExpNames = [];
+      const initExpAmts = {};
+      user.constant_expenses.forEach((item) => {
+        initExpNames.push(item.name);
+        initExpAmts[item.name] = item.amount;
+      });
+      setFixedExpenses(initExpNames);
+      setExpenseAmounts(initExpAmts);
     }
   }, [user]);
 
@@ -59,13 +78,36 @@ export default function ProfilePage() {
     return amt;
   };
 
-  const totalMonthly = occupations.reduce((s, occ) => s + toMonthly(occ), 0);
-
   const handleRemoveOccupation = (occName) => {
     setOccupations(occupations.filter(o => o !== occName));
     const ni = { ...incomes };     delete ni[occName];     setIncomes(ni);
     const nf = { ...frequencies }; delete nf[occName];     setFrequencies(nf);
   };
+
+  const handleAddExpense = () => {
+    const expName = newExpenseName.trim();
+    if (!expName || fixedExpenses.includes(expName)) return;
+    setFixedExpenses([...fixedExpenses, expName]);
+    setExpenseAmounts({ ...expenseAmounts, [expName]: '' });
+    setNewExpenseName('');
+    setShowAddExpense(false);
+  };
+
+  const handleRemoveExpense = (expName) => {
+    setFixedExpenses(fixedExpenses.filter(e => e !== expName));
+    const ne = { ...expenseAmounts }; delete ne[expName]; setExpenseAmounts(ne);
+  };
+
+  const totalMonthly = occupations.reduce((s, occ) => s + toMonthly(occ), 0);
+  const totalFixedExpenses = fixedExpenses.reduce((s, exp) => s + (parseFloat(expenseAmounts[exp]) || 0), 0);
+
+  // Auto-calculate savings goal (Income - Fixed Needs)
+  useEffect(() => {
+    if (totalMonthly > 0 || totalFixedExpenses > 0) {
+      const difference = Math.max(0, totalMonthly - totalFixedExpenses);
+      setMonthlyGoal(difference);
+    }
+  }, [totalMonthly, totalFixedExpenses]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -81,6 +123,11 @@ export default function ProfilePage() {
         monthly_equivalent: toMonthly(occ),
       }));
 
+      const constantExps = fixedExpenses.map(exp => ({
+        name: exp,
+        amount: parseFloat(expenseAmounts[exp]) || 0,
+      }));
+
       const totalIncome = incomePerOcc.reduce((sum, item) => sum + item.monthly_equivalent, 0);
       const monthly = parseFloat(monthlyGoal) || 0;
 
@@ -88,6 +135,7 @@ export default function ProfilePage() {
         full_name: fullName.trim(),
         occupations: occupations,
         income_per_occupation: incomePerOcc,
+        constant_expenses: constantExps,
         total_monthly_income: totalIncome,
         monthly_income_estimate: totalIncome,
         current_balance: parseFloat(balance) || null,
@@ -102,6 +150,21 @@ export default function ProfilePage() {
       setError(err?.response?.data?.detail || 'Failed to update profile. Please try again.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSeedMockData = async () => {
+    setSeeding(true);
+    setSeedSuccess(false);
+    setError('');
+    try {
+      await authService.seedMockData();
+      setSeedSuccess(true);
+      setTimeout(() => setSeedSuccess(false), 3000);
+    } catch (err) {
+      setError(err?.response?.data?.detail || 'Failed to seed mock data');
+    } finally {
+      setSeeding(false);
     }
   };
 
@@ -155,7 +218,36 @@ export default function ProfilePage() {
             </div>
           )}
 
+          {/* Demo Options */}
+          <div className="profile-section" style={{ border: '1px dashed var(--accent-1)', background: 'rgba(13, 148, 136, 0.03)' }}>
+            <h3 className="profile-section-title"><TestTube size={16} /> Demo Options</h3>
+            <p className="profile-section-desc">Instantly populate your account with realistic mock transactions to explore the app.</p>
+            <div style={{ marginTop: '16px' }}>
+              <button
+                type="button"
+                onClick={handleSeedMockData}
+                disabled={seeding}
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: '8px',
+                  padding: '10px 18px', borderRadius: '8px', fontWeight: 600, fontSize: '14px',
+                  border: '1px solid var(--accent-1)', background: 'transparent',
+                  color: 'var(--accent-1)', cursor: seeding ? 'not-allowed' : 'pointer',
+                  opacity: seeding ? 0.7 : 1, transition: 'all 0.15s'
+                }}
+              >
+                {seeding ? <span className="spinner" style={{ width: '14px', height: '14px', borderColor: 'var(--accent-1)', borderTopColor: 'transparent' }} /> : <TestTube size={15} />}
+                {seeding ? 'Seeding…' : 'Seed Mock Data'}
+              </button>
+              {seedSuccess && (
+                <p style={{ color: 'var(--success)', fontSize: '13px', marginTop: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <CheckCircle2 size={14} /> 30 mock transactions seeded successfully!
+                </p>
+              )}
+            </div>
+          </div>
+
           <form onSubmit={handleSubmit}>
+
             {/* Personal Details */}
             <div className="profile-section">
               <h3 className="profile-section-title"><User size={16} /> Account</h3>
@@ -248,12 +340,72 @@ export default function ProfilePage() {
               {occupations.length > 0 && totalMonthly > 0 && (
                 <div className="income-total-bar">
                   <span>Projected monthly income</span>
-                  <strong>₹{totalMonthly.toLocaleString('en-IN')}</strong>
+                  <span className="income-total-val">₹{totalMonthly.toLocaleString('en-IN')}</span>
                 </div>
               )}
             </div>
 
-            {/* Financial Goals */}
+            {/* Fixed Expenses */}
+            <div className="profile-section">
+              <h3 className="profile-section-title"><CreditCard size={16} /> Fixed Expenses (Needs)</h3>
+              <p className="profile-section-desc">Constant recurring expenses like Rent, Gym, Internet, etc.</p>
+
+              <div style={{ marginBottom: '16px' }}>
+                {fixedExpenses.map((exp) => (
+                  <div key={exp} className="income-list-item">
+                    <div className="income-list-header-row">
+                      <span className="income-list-title">{exp}</span>
+                      <button type="button" className="icon-btn" onClick={() => handleRemoveExpense(exp)} aria-label={`Remove ${exp}`}>
+                        <Trash2 size={15} />
+                      </button>
+                    </div>
+
+                    <div className="income-source-controls">
+                      <div className="income-input-wrap" style={{ flex: 1 }}>
+                        <span className="income-currency">₹</span>
+                        <input
+                          type="number"
+                          className="form-input"
+                          placeholder="0 / month"
+                          value={expenseAmounts[exp] ?? ''}
+                          onChange={(e) => setExpenseAmounts({ ...expenseAmounts, [exp]: e.target.value })}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Inline add expense */}
+              {showAddExpense ? (
+                <div className="add-occ-row">
+                  <input
+                    type="text"
+                    className="form-input"
+                    placeholder="e.g. House Rent, WiFi, Gym…"
+                    value={newExpenseName}
+                    onChange={e => setNewExpenseName(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && handleAddExpense()}
+                    autoFocus
+                  />
+                  <button type="button" className="add-occ-confirm" onClick={handleAddExpense}>Add</button>
+                  <button type="button" className="add-occ-cancel" onClick={() => { setShowAddExpense(false); setNewExpenseName(''); }}>Cancel</button>
+                </div>
+              ) : (
+                <button type="button" className="add-btn-outline" onClick={() => setShowAddExpense(true)}>
+                  <Plus size={16} /> Add fixed expense
+                </button>
+              )}
+
+              {fixedExpenses.length > 0 && totalFixedExpenses > 0 && (
+                <div className="income-total-bar" style={{ background: 'rgba(239, 68, 68, 0.1)', color: 'var(--text-primary)' }}>
+                  <span>Total monthly fixed expenses</span>
+                  <span className="income-total-val" style={{ color: 'var(--danger)' }}>₹{totalFixedExpenses.toLocaleString('en-IN')}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Savings Goals */}
             <div className="profile-section">
               <h3 className="profile-section-title"><Target size={16} /> Financial Goals</h3>
               <div className="form-grid">
@@ -274,6 +426,9 @@ export default function ProfilePage() {
                     value={monthlyGoal}
                     onChange={(e) => setMonthlyGoal(e.target.value)}
                   />
+                  <p className="form-hint" style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '6px' }}>
+                    Auto-calculated: Extra money remaining after fixed expenses.
+                  </p>
                 </div>
               </div>
             </div>

@@ -43,6 +43,9 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER:-gigtogeek_user}:${POSTGRES_PASSWORD:-gigtogeek_secret}@db:5432/${POSTGRES_DB:-gigtogeek_db}
       SECRET_KEY: ${SECRET_KEY:-change_me_in_production_supersecretkey}
       ENVIRONMENT: ${ENVIRONMENT:-development}
+      COMET_API_KEY: ${COMET_API_KEY:-}
+      COMET_API_BASE_URL: ${COMET_API_BASE_URL:-https://api.cometapi.com/v1}
+      COMET_MODEL: ${COMET_MODEL:-gpt-4o-mini}
     ports:
       - "8000:8000"
     volumes:

@@ -20,4 +20,9 @@ export const authService = {
     const res = await api.get('/auth/me');
     return res.data;
   },
+
+  seedMockData: async () => {
+    const res = await api.post('/auth/me/seed');
+    return res.data;
+  },
 };
