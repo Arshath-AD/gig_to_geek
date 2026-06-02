@@ -21,6 +21,7 @@
 .nav-container {
   max-width: 1024px;
   width: 100%;
+  height: 100%; /* Spans the full height of the 64px header to enable proper centering */
   margin: 0 auto;
   padding: 0 24px;
   display: flex;
@@ -28,25 +29,33 @@
   position: relative;
 }
 
-.auth-brand {
+.home-nav .auth-brand {
   display: flex;
   align-items: center;
   gap: 10px;
   text-decoration: none;
   flex-shrink: 0;
+  margin-bottom: 0;
+  /* Overrides leaking margin-bottom from Auth.css in SPA context */
 }
 
-.brand-logo-img {
-  height: 32px;
+.home-nav .brand-logo-img {
+  height: 28px;
   width: auto;
   display: block;
+  /* Prevents inline baseline rendering offsets */
+  transform: translateY(-0.5px);
+  /* Precise visual correction for the asset's internal vertical offset */
 }
 
-.brand-name {
+.home-nav .brand-name {
   font-size: 15px;
   font-weight: 600;
   color: var(--text-primary);
   letter-spacing: -0.01em;
+  line-height: 1;
+  /* Collapses extra line height to align visual center with the logo */
+  transform: translateY(1px); /* Shifts the text slightly down for visual alignment */
 }
 
 .nav-links {
@@ -379,15 +388,17 @@
 
 /* ── Responsive ──────────────────────────────────────────── */
 @media (max-width: 768px) {
-  .overview-grid, .secondary-grid {
+
+  .overview-grid,
+  .secondary-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .home-header-section {
     flex-direction: column;
     gap: 16px;
   }
-  
+
   .nav-links {
     display: none;
   }
